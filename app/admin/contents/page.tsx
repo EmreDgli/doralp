@@ -28,14 +28,14 @@ export default function ContentsPage() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 opacity-50">
+        <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">İletişim</h3>
-          <p className="text-gray-600 mb-4">Şu anda statik içerikler kullanılıyor (Yakında dinamik)</p>
+          <p className="text-gray-600 mb-4">İletişim bilgileri ve adres bilgileri</p>
           <button 
-            disabled
-            className="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed"
+            onClick={() => router.push('/admin/contact-cards')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            Yakında Aktif
+            Düzenle
           </button>
         </div>
 
