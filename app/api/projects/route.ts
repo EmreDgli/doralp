@@ -2,50 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-// GET - Tüm projeleri getir (sadece admin)
+// GET - Tüm projeleri getir (public erişim için admin client)
 export async function GET() {
   try {
     console.log('API: Projects endpoint called');
     
-    const supabase = createClient();
-    
-    // Session'ı kontrol et
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log('API: Session check:', { 
-      hasSession: !!session, 
-      sessionError: sessionError?.message,
-      userId: session?.user?.id,
-      userEmail: session?.user?.email
-    });
-    
-    // Kullanıcının authenticated olduğunu kontrol et
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    console.log('API: Auth check result:', { 
-      user: !!user, 
-      userId: user?.id,
-      userEmail: user?.email,
-      error: authError?.message 
-    });
-    
-    // Authentication kontrolü - geçici olarak bypass edildi
-    if (authError) {
-      console.log('API: Auth error:', authError.message);
-      console.log('API: Continuing despite auth error for testing');
+    // Geçici olarak admin client ile public erişim sağla
+    let adminClient;
+    try {
+      adminClient = createAdminClient();
+      console.log('API: Admin client created successfully');
+    } catch (adminError) {
+      console.error('API: Failed to create admin client:', adminError);
+      return NextResponse.json({ error: 'Admin client oluşturulamadı: ' + adminError.message }, { status: 500 });
     }
-    
-    if (!user) {
-      console.log('API: No user found');
-      console.log('API: Continuing despite no user for testing');
-    }
-    
-    if (user) {
-      console.log('API: User authenticated successfully:', user.email);
-    }
-
-    console.log('API: Creating admin client');
-    // Admin client ile projeleri getir
-    const adminClient = createAdminClient();
-    console.log('API: Fetching projects with admin client');
     
     const { data: projects, error } = await adminClient
       .from('projects')
@@ -152,8 +122,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Proje adı ve kategori gerekli' }, { status: 400 });
     }
 
-    // Admin client ile yeni proje oluştur
-    const adminClient = createAdminClient();
+    // Geçici olarak normal client kullan
+    const adminClient = supabase;
     
     // Yıl değerini tam tarih formatına çevir
     const formatYearToDate = (yearString: string) => {

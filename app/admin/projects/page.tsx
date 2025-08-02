@@ -19,7 +19,7 @@ interface Project {
   language: string;
   created_at: string;
   updated_at: string;
-  'project-images'?: ProjectImage[];
+  project_images?: ProjectImage[];
 }
 
 interface ProjectForm {
@@ -140,9 +140,9 @@ export default function ProjectsPage() {
       projects: projects.map(p => ({
         id: p.id,
         title: p.title,
-        imagesCount: p['project-images']?.length || 0,
-        firstImage: p['project-images']?.[0]?.image_url,
-        allImages: p['project-images']
+        imagesCount: p.project_images?.length || 0,
+        firstImage: p.project_images?.[0]?.image_url,
+        allImages: p.project_images
       }))
     });
   }, [projects]);
@@ -244,7 +244,7 @@ export default function ProjectsPage() {
       end_date: endDate,
       is_ongoing: !project.end_date,
       language: project.language,
-      images: project['project-images']?.map(img => ({
+              images: project.project_images?.map(img => ({
         url: img.url,
         alt_text: img.alt_text || ""
       })) || []
@@ -681,35 +681,35 @@ export default function ProjectsPage() {
           {projects.map((project) => (
             <div key={project.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
               {/* Proje Görseli */}
-              {project['project-images'] && project['project-images'].length > 0 && (
+              {project.project_images && project.project_images.length > 0 && (
                 <div className="relative h-48 bg-gray-100">
                   <img
-                    src={project['project-images'][0].image_url}
-                    alt={project['project-images'][0].alt_text || project.title}
+                    src={project.project_images[0].image_url}
+                    alt={project.project_images[0].alt_text || project.title}
                     className="w-full h-full object-cover"
                     onLoad={() => {
-                      console.log('Image loaded successfully:', project['project-images'][0].image_url);
+                      console.log('Image loaded successfully:', project.project_images[0].image_url);
                     }}
                     onError={(e) => {
-                      console.error('Image failed to load:', project['project-images'][0].image_url);
+                      console.error('Image failed to load:', project.project_images[0].image_url);
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }}
                   />
-                  {project['project-images'].length > 1 && (
+                  {project.project_images.length > 1 && (
                     <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                      +{project['project-images'].length - 1} fotoğraf
+                      +{project.project_images.length - 1} fotoğraf
                     </div>
                   )}
                   {/* Debug info */}
                   <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                    {project['project-images'][0].image_url.split('/').pop()}
+                    {project.project_images[0].image_url.split('/').pop()}
                   </div>
                 </div>
               )}
               
               {/* Debug: Görseller yoksa bilgi göster */}
-              {(!project['project-images'] || project['project-images'].length === 0) && (
+              {(!project.project_images || project.project_images.length === 0) && (
                 <div className="h-48 bg-gray-200 flex items-center justify-center">
                   <div className="text-center text-gray-500">
                     <div>Görsel bulunamadı</div>
@@ -760,10 +760,10 @@ export default function ProjectsPage() {
                   </div>
                 )}
                 
-                {project['project-images'] && project['project-images'].length > 0 && (
+                {project.project_images && project.project_images.length > 0 && (
                   <div className="flex items-center gap-1 text-xs text-gray-500">
                     <Image size={12} />
-                    {project['project-images'].length} resim
+                    {project.project_images.length} resim
                   </div>
                 )}
               </div>

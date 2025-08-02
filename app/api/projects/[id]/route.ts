@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET(
@@ -10,6 +9,8 @@ export async function GET(
     // Public erişim için admin client kullan
     const supabase = createAdminClient()
     const { id } = params
+
+    console.log('API: Fetching project detail for ID:', id)
 
     // Proje bilgisini ve resimleri al
     const { data: project, error: projectError } = await supabase
@@ -35,7 +36,7 @@ export async function GET(
       return NextResponse.json({ message: 'Proje bulunamadı' }, { status: 404 })
     }
 
-    console.log('Project detail fetched:', project.id, project.title)
+    console.log('Project detail fetched:', project.id, project.title, 'Images:', project.project_images?.length || 0)
     return NextResponse.json(project)
 
   } catch (error) {

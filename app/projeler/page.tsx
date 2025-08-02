@@ -114,8 +114,9 @@ export default function ProjelerPage() {
                     description={project.description}
                     location={project.location}
                     category={project.category}
-                    year={project.date ? new Date(project.date).getFullYear().toString() : undefined}
-                    project-images={project.project_images}
+                    startDate={project.date}
+                    endDate={project.end_date}
+                    project_images={project.project_images}
                   />
                 ))
               )}
