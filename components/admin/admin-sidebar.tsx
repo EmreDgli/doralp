@@ -10,7 +10,6 @@ import {
   LayoutDashboard,
   Users,
   FileText,
-  BookOpen,
   FolderOpen,
   ImageIcon,
   Settings,
@@ -36,11 +35,6 @@ const menuItems = [
     title: "İçerik Yönetimi",
     href: "/admin/contents",
     icon: FileText,
-  },
-  {
-    title: "Sayfa İçerikleri",
-    href: "/admin/contents-management",
-    icon: BookOpen,
   },
   {
     title: "Projeler",

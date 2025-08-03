@@ -113,13 +113,14 @@ export function CounterSection() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {counters.map((counter, index) => (
-            <CounterItem
-              key={index}
-              end={counter.end}
-              label={counter.label}
-              suffix={counter.suffix}
-              duration={2 + index * 0.2}
-            />
+            <div key={index} className={`animate-card-up animate-delay-${(index + 1) * 200}`}>
+              <CounterItem
+                end={counter.end}
+                label={counter.label}
+                suffix={counter.suffix}
+                duration={2 + index * 0.2}
+              />
+            </div>
           ))}
         </div>
       </div>

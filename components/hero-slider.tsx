@@ -20,6 +20,13 @@ export function HeroSlider() {
   const [loading, setLoading] = useState(true)
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
+  const [homeContent, setHomeContent] = useState({
+    hero: {
+      title: 'Doralp Yapı',
+      subtitle: 'Güvenilir İnşaat Çözümleri',
+      description: '25 yıllık deneyimle kaliteli inşaat hizmetleri sunuyoruz'
+    }
+  })
 
   const services = [
     {
@@ -72,6 +79,19 @@ export function HeroSlider() {
     }
 
     fetchSlides()
+  }, [])
+
+  // Ana sayfa içeriğini localStorage'dan yükle
+  useEffect(() => {
+    const savedContent = localStorage.getItem('homeContent')
+    if (savedContent) {
+      try {
+        const parsedContent = JSON.parse(savedContent)
+        setHomeContent(parsedContent)
+      } catch (error) {
+        console.error('Home content parse error:', error)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -127,12 +147,12 @@ export function HeroSlider() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex items-center justify-center h-full">
           <div className="space-y-4 md:space-y-6 lg:space-y-8 -mt-16 md:-mt-24 lg:-mt-32 px-4">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-              Endüstriyel Çelik Yapı
+              {homeContent.hero.title}
               <br />
-              <span className="text-doralp-gold">Çözümleri</span>
+              <span className="text-doralp-gold">{homeContent.hero.subtitle}</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto leading-relaxed">
-              25+ yıllık deneyimimizle endüstriyel çelik yapı, fabrika inşaatı ve proje yönetimi alanında güvenilir çözümler sunuyoruz.
+              {homeContent.hero.description}
             </p>
             <Button size="lg" className="bg-doralp-gold hover:bg-doralp-gold/90 text-white px-8 py-3 text-lg">
               <Link href="/projeler">Projelerimizi İnceleyin</Link>
@@ -290,8 +310,8 @@ export function HeroSlider() {
       {/* Services Navigation - Slider'ın üzerinde */}
       <div className="absolute bottom-16 md:bottom-20 lg:bottom-24 left-1/2 transform -translate-x-1/2 z-20 w-full max-w-6xl px-4">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
-          {services.map((service) => (
-            <div key={service.id} className="group">
+          {services.map((service, index) => (
+            <div key={service.id} className={`group animate-card-up animate-delay-${(index + 1) * 100}`}>
               <Link 
                 href={service.href}
                 target={service.href.startsWith('http') ? "_blank" : "_self"}

@@ -15,7 +15,10 @@ export default function ContentsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Ana Sayfa</h3>
           <p className="text-gray-600 mb-4">Hero bölümü, hakkımızda özeti ve diğer ana sayfa içerikleri</p>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          <button 
+            onClick={() => router.push('/admin/home-content')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
             Düzenle
           </button>
         </div>
@@ -23,7 +26,10 @@ export default function ContentsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Hakkımızda</h3>
           <p className="text-gray-600 mb-4">Şirket hikayesi, vizyon ve misyon bilgileri</p>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          <button 
+            onClick={() => router.push('/admin/about-content')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
             Düzenle
           </button>
         </div>
@@ -35,14 +41,6 @@ export default function ContentsPage() {
             onClick={() => router.push('/admin/contact-cards')}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            Düzenle
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Hizmetler</h3>
-          <p className="text-gray-600 mb-4">Sunulan hizmetler ve detayları</p>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
             Düzenle
           </button>
         </div>

@@ -1,19 +1,34 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
 import { CheckCircle } from "lucide-react"
 
 export function AboutUsSection() {
-  const features = [
-    "ISO 9001:2015 Kalite Yönetim Sistemi",
-    "Deneyimli ve uzman kadro",
-    "Modern makine parkı",
-    "Zamanında teslimat garantisi",
-    "Müşteri odaklı hizmet anlayışı",
-    "Çevre dostu üretim süreçleri",
-  ]
+  const [homeContent, setHomeContent] = useState({
+    about_section: {
+      title: 'Neden Doralp Yapı?',
+      description: '25 yıllık deneyimimiz, kaliteli malzemelerimiz ve uzman ekibimizle her projede mükemmelliği hedefliyoruz.',
+      features: ['Deneyimli Ekip', 'Kaliteli Malzeme', 'Zamanında Teslimat', 'Müşteri Memnuniyeti']
+    }
+  })
+
+  // localStorage'dan ana sayfa içeriğini yükle
+  useEffect(() => {
+    const savedContent = localStorage.getItem('homeContent')
+    if (savedContent) {
+      try {
+        const parsedContent = JSON.parse(savedContent)
+        if (parsedContent.about_section) {
+          setHomeContent(parsedContent)
+        }
+      } catch (error) {
+        console.error('Home content parse error:', error)
+      }
+    }
+  }, [])
 
   return (
     <section className="py-16 md:py-24 bg-white">
@@ -23,12 +38,11 @@ export function AboutUsSection() {
           <div className="space-y-8">
             <div>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-doralp-navy mb-6">
-                Biz <span className="text-doralp-gold">Kimiz?</span>
+                {homeContent.about_section.title.split(' ').slice(0, -2).join(' ')} <span className="text-doralp-gold">{homeContent.about_section.title.split(' ').slice(-2).join(' ')}</span>
               </h2>
 
               <p className="text-lg text-doralp-gray leading-relaxed mb-6">
-                Doralp, 1998 yılından bu yana endüstriyel çelik yapı sektöründe faaliyet gösteren, kaliteli üretim ve
-                güvenilir hizmet anlayışıyla sektörde öncü konumda yer alan bir firmadır.
+                {homeContent.about_section.description}
               </p>
 
               <p className="text-lg text-doralp-gray leading-relaxed mb-8">
@@ -38,10 +52,10 @@ export function AboutUsSection() {
             </div>
 
             <div className="space-y-4">
-              {features.map((feature, index) => (
+              {homeContent.about_section.features.map((feature, index) => (
                 <div
                   key={index}
-                  className="flex items-center space-x-3"
+                  className={`flex items-center space-x-3 animate-card-up animate-delay-${(index + 1) * 200}`}
                 >
                   <CheckCircle className="h-5 w-5 text-doralp-gold flex-shrink-0" />
                   <span className="text-doralp-gray">{feature}</span>

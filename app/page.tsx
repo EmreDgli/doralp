@@ -5,9 +5,15 @@ import { AboutUsSection } from "@/components/about-us-section"
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      <HeroSlider />
-      <CounterSection />
-      <AboutUsSection />
+      <div className="animate-fade-in">
+        <HeroSlider />
+      </div>
+      <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        <CounterSection />
+      </div>
+      <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
+        <AboutUsSection />
+      </div>
     </div>
   )
 }
