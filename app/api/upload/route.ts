@@ -13,6 +13,11 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File;
     const folder = formData.get('folder') as string || 'project-images';
     
+    // Galeri resimleri için özel folder
+    if (folder === 'gallery-images') {
+      console.log('API: Gallery image upload detected');
+    }
+    
     if (!file) {
       return NextResponse.json({ error: 'Dosya bulunamadı' }, { status: 400 });
     }

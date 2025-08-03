@@ -269,38 +269,53 @@ export const adminContactApi = {
 // Gallery API
 export const adminGalleryApi = {
   async getGallery() {
-    const { data, error } = await supabase.rpc("get_admin_gallery")
-    if (error) throw error
+    try {
+      // Önce kategorileri al
+      const { data: categories, error: categoriesError } = await supabase
+        .from('gallery_categories')
+        .select('*')
+        .order('sort_order', { ascending: true })
+      
+      if (categoriesError) throw categoriesError
 
-    // Group by category
-    const categories = new Map()
-    data?.forEach((item) => {
-      if (!categories.has(item.category_id)) {
-        categories.set(item.category_id, {
-          id: item.category_id,
-          title: item.category_title,
-          slug: item.category_slug,
-          sort_order: item.category_sort_order,
-          is_active: item.category_is_active,
-          created_by: item.category_created_by,
-          images: [],
-        })
-      }
+      // Sonra her kategori için resimleri al
+      const categoriesWithImages = await Promise.all(
+        categories?.map(async (category) => {
+          const { data: images, error: imagesError } = await supabase
+            .from('gallery_images')
+            .select('*')
+            .eq('category_id', category.id)
+            .order('sort_order', { ascending: true })
 
-      if (item.image_id) {
-        categories.get(item.category_id).images.push({
-          id: item.image_id,
-          url: item.image_url,
-          alt_text: item.image_alt_text,
-          sort_order: item.image_sort_order,
-          is_active: item.image_is_active,
-          file_size: item.image_file_size,
-          created_by: item.image_created_by,
-        })
-      }
-    })
+          if (imagesError) {
+            console.error(`Images error for category ${category.id}:`, imagesError)
+          }
 
-    return Array.from(categories.values()).sort((a, b) => a.sort_order - b.sort_order)
+          return {
+            id: category.id,
+            title: category.title,
+            slug: category.slug,
+            sort_order: category.sort_order,
+            is_active: category.is_active,
+            created_by: category.created_by || 'System',
+            images: images?.map(img => ({
+              id: img.id,
+              image_url: img.image_url,
+              alt_text: img.alt_text,
+              sort_order: img.sort_order,
+              is_active: img.is_active,
+              file_size: img.file_size,
+              created_by: img.created_by
+            })) || []
+          }
+        }) || []
+      )
+
+      return categoriesWithImages
+    } catch (error) {
+      console.error('getGallery error:', error)
+      throw error
+    }
   },
 
   async createCategory(category: {
@@ -334,18 +349,71 @@ export const adminGalleryApi = {
       file_type?: string
     },
   ) {
+    // Kullanıcı ID'sini güvenli şekilde al
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id || null
+
+    const insertData = {
+      category_id: categoryId,
+      ...imageData,
+    }
+
+    // Sadece geçerli UUID varsa created_by ekle
+    if (userId && userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      insertData.created_by = userId
+    }
+
     const { data, error } = await supabase
       .from("gallery_images")
-      .insert({
-        category_id: categoryId,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-        ...imageData,
-      })
+      .insert(insertData)
       .select()
       .single()
 
     if (error) throw error
     return data
+  },
+
+  async deleteImage(imageId: string) {
+    try {
+      // Önce resim bilgilerini al
+      const { data: image, error: fetchError } = await supabase
+        .from('gallery_images')
+        .select('image_url')
+        .eq('id', imageId)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Storage'dan dosyayı sil
+      if (image?.image_url) {
+        const pathMatch = image.image_url.match(/gallery-images\/([^?]+)/)
+        if (pathMatch) {
+          const filePath = `gallery-images/${pathMatch[1]}`
+          console.log('Storage\'dan silinecek dosya:', filePath)
+          
+          const { error: storageError } = await supabase.storage
+            .from('images')
+            .remove([filePath])
+
+          if (storageError) {
+            console.error('Storage silme hatası:', storageError)
+          }
+        }
+      }
+
+      // Database'den kaydı sil
+      const { error: deleteError } = await supabase
+        .from('gallery_images')
+        .delete()
+        .eq('id', imageId)
+
+      if (deleteError) throw deleteError
+
+      return { success: true }
+    } catch (error) {
+      console.error('deleteImage error:', error)
+      throw error
+    }
   },
 }
 
@@ -358,13 +426,23 @@ export const adminSlidesApi = {
   },
 
   async createSlide(slide: Database["public"]["Tables"]["slides"]["Insert"]) {
+    // Kullanıcı ID'sini güvenli şekilde al
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id || null
+
+    const insertData = {
+      ...slide,
+    }
+
+    // Sadece geçerli UUID varsa created_by ve updated_by ekle
+    if (userId && userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      insertData.created_by = userId
+      insertData.updated_by = userId
+    }
+
     const { data, error } = await supabase
       .from("slides")
-      .insert({
-        ...slide,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-        updated_by: (await supabase.auth.getUser()).data.user?.id,
-      })
+      .insert(insertData)
       .select()
       .single()
 
@@ -373,12 +451,22 @@ export const adminSlidesApi = {
   },
 
   async updateSlide(id: string, updates: Database["public"]["Tables"]["slides"]["Update"]) {
+    // Kullanıcı ID'sini güvenli şekilde al
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id || null
+
+    const updateData = {
+      ...updates,
+    }
+
+    // Sadece geçerli UUID varsa updated_by ekle
+    if (userId && userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      updateData.updated_by = userId
+    }
+
     const { data, error } = await supabase
       .from("slides")
-      .update({
-        ...updates,
-        updated_by: (await supabase.auth.getUser()).data.user?.id,
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single()
