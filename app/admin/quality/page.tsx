@@ -1,591 +1,458 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Edit, Trash2, Upload, TableIcon } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { adminStorageApi } from "@/lib/admin-api"
+import { toast } from "sonner"
+import { Plus, Edit, Trash2, FileText, Calendar } from "lucide-react"
 import Image from "next/image"
 
-interface QualityItem {
+interface QualityCertificate {
   id: string
-  section: "altbaslik1" | "altbaslik2" | "altbaslik3" | "altbaslik4"
-  title: string | null
-  description: string | null
-  content: string | null
-  image_url: string | null
-  table_data: any
-  sort_order: number
+  title: string
+  description: string
+  certificate_number: string
+  issue_date: string
+  expiry_date?: string
+  issuing_authority: string
+  certificate_file_url?: string
+  image_url?: string
   is_active: boolean
-  language: "tr" | "en"
-  created_by: string | null
-  updated_by: string | null
   created_at: string
-  updated_at: string
 }
 
-const sectionOptions = [
-  { value: "altbaslik1", label: "Alt Başlık 1" },
-  { value: "altbaslik2", label: "Alt Başlık 2" },
-  { value: "altbaslik3", label: "Alt Başlık 3" },
-  { value: "altbaslik4", label: "Alt Başlık 4" },
-]
-
-export default function QualityPage() {
-  const [qualityItems, setQualityItems] = useState<QualityItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("altbaslik1")
+export default function QualitySystemPage() {
+  const [certificates, setCertificates] = useState<QualityCertificate[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isTableDialogOpen, setIsTableDialogOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<QualityItem | null>(null)
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const [tableData, setTableData] = useState<any[]>([])
-  const [tableHeaders, setTableHeaders] = useState<string[]>([])
+  const [editingCertificate, setEditingCertificate] = useState<QualityCertificate | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
-    section: "altbaslik1" as "altbaslik1" | "altbaslik2" | "altbaslik3" | "altbaslik4",
-    title: "",
-    description: "",
-    content: "",
-    image_url: "",
-    is_active: true,
-    language: "tr" as "tr" | "en",
+    title: '',
+    description: '',
+    certificate_number: '',
+    issue_date: '',
+    expiry_date: '',
+    issuing_authority: '',
+    is_active: true
   })
 
+  const [selectedFiles, setSelectedFiles] = useState<{
+    image?: File
+  }>({})
+
+  // Sertifikaları yükle
+  const loadCertificates = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/quality-system')
+      if (response.ok) {
+        const data = await response.json()
+        setCertificates(data)
+      } else {
+        toast.error('Sertifikalar yüklenemedi')
+      }
+    } catch (error) {
+      console.error('Load certificates error:', error)
+      toast.error('Sertifikalar yüklenirken hata oluştu')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
-    loadQualityItems()
+    loadCertificates()
   }, [])
 
-  const loadQualityItems = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from("quality_system")
-        .select("*")
-        .order("section", { ascending: true })
-        .order("sort_order", { ascending: true })
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      certificate_number: '',
+      issue_date: '',
+      expiry_date: '',
+      issuing_authority: '',
+      is_active: true
+    })
+    setSelectedFiles({})
+    setEditingCertificate(null)
+  }
 
-      if (error) throw error
-      setQualityItems(data || [])
+  const handleAdd = () => {
+      resetForm()
+    setIsDialogOpen(true)
+  }
+
+  const handleEdit = (certificate: QualityCertificate) => {
+    setFormData({
+      title: certificate.title,
+      description: certificate.description,
+      certificate_number: certificate.certificate_number,
+      issue_date: certificate.issue_date,
+      expiry_date: certificate.expiry_date || '',
+      issuing_authority: certificate.issuing_authority,
+      is_active: certificate.is_active
+    })
+    setEditingCertificate(certificate)
+    setSelectedFiles({})
+    setIsDialogOpen(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bu sertifikayı silmek istediğinizden emin misiniz?')) return
+
+    try {
+      const response = await fetch(`/api/quality-system/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        toast.success('Sertifika silindi')
+        loadCertificates()
+      } else {
+        toast.error('Sertifika silinemedi')
+      }
     } catch (error) {
-      console.error("Quality items load error:", error)
-    } finally {
-      setLoading(false)
+      console.error('Delete certificate error:', error)
+      toast.error('Sertifika silinirken hata oluştu')
     }
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedFiles(prev => ({
+        ...prev,
+        image: file
+      }))
+    }
+  }
+
+  const uploadFile = async (file: File, folder: string): Promise<string> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', folder)
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Upload Error:', errorData)
+      throw new Error(`Dosya yüklenemedi: ${errorData.error || 'Bilinmeyen hata'}`)
+    }
+
+    const data = await response.json()
+    return data.url
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
+
+    // Form validation
+    if (!formData.title.trim()) {
+      toast.error('Başlık boş olamaz')
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!formData.certificate_number.trim()) {
+      toast.error('Sertifika numarası boş olamaz')
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!formData.issue_date) {
+      toast.error('Veriliş tarihi seçilmelidir')
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!formData.issuing_authority.trim()) {
+      toast.error('Veren kurum boş olamaz')
+      setIsSubmitting(false)
+      return
+    }
+
+    console.log('Form validation passed, submitting:', formData)
 
     try {
-      const itemData = {
+      let image_url = editingCertificate?.image_url
+
+      // Görseli yükle
+      if (selectedFiles.image) {
+        image_url = await uploadFile(selectedFiles.image, 'quality-system')
+      }
+
+      const submitData = {
         ...formData,
-        created_by: editingItem ? undefined : (await supabase.auth.getUser()).data.user?.id,
-        updated_by: (await supabase.auth.getUser()).data.user?.id,
+        image_url
       }
 
-      if (editingItem) {
-        const { error } = await supabase.from("quality_system").update(itemData).eq("id", editingItem.id)
+      const url = editingCertificate 
+        ? `/api/quality-system/${editingCertificate.id}`
+        : '/api/quality-system'
+      
+      const method = editingCertificate ? 'PUT' : 'POST'
 
-        if (error) throw error
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(submitData)
+      })
+
+      if (response.ok) {
+        toast.success(editingCertificate ? 'Sertifika güncellendi' : 'Sertifika eklendi')
+        setIsDialogOpen(false)
+        resetForm()
+        loadCertificates()
       } else {
-        const sectionItems = qualityItems.filter((item) => item.section === formData.section)
-        const maxSortOrder = Math.max(...sectionItems.map((s) => s.sort_order), 0)
-
-        const { error } = await supabase.from("quality_system").insert({
-          ...itemData,
-          sort_order: maxSortOrder + 1,
-        })
-
-        if (error) throw error
+        const errorData = await response.json()
+        console.error('API Error:', errorData)
+        console.error('Response status:', response.status)
+        toast.error(`Sertifika eklenemedi: ${errorData.error || 'Bilinmeyen hata'}`)
       }
-
-      await loadQualityItems()
-      setIsDialogOpen(false)
-      resetForm()
-    } catch (error: any) {
-      console.error("Quality item save error:", error)
-      alert(error.message || "Kalite öğesi kaydedilirken hata oluştu")
-    }
-  }
-
-  const handleTableSubmit = async () => {
-    if (!editingItem) return
-
-    try {
-      const { error } = await supabase
-        .from("quality_system")
-        .update({
-          table_data: { headers: tableHeaders, rows: tableData },
-          updated_by: (await supabase.auth.getUser()).data.user?.id,
-        })
-        .eq("id", editingItem.id)
-
-      if (error) throw error
-
-      await loadQualityItems()
-      setIsTableDialogOpen(false)
-      setEditingItem(null)
-    } catch (error: any) {
-      console.error("Table save error:", error)
-      alert(error.message || "Tablo kaydedilirken hata oluştu")
-    }
-  }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    try {
-      setUploadingImage(true)
-      const uploadResult = await adminStorageApi.uploadImage(file, "admin-images", "quality")
-      setFormData({ ...formData, image_url: uploadResult.url })
-    } catch (error: any) {
-      console.error("Image upload error:", error)
-      alert(error.message || "Resim yüklenirken hata oluştu")
+    } catch (error) {
+      console.error('Submit error:', error)
+      toast.error('Sertifika kaydedilirken hata oluştu')
     } finally {
-      setUploadingImage(false)
+      setIsSubmitting(false)
     }
   }
 
-  const handleEdit = (item: QualityItem) => {
-    setEditingItem(item)
-    setFormData({
-      section: item.section,
-      title: item.title || "",
-      description: item.description || "",
-      content: item.content || "",
-      image_url: item.image_url || "",
-      is_active: item.is_active,
-      language: item.language,
-    })
-    setIsDialogOpen(true)
-  }
-
-  const handleEditTable = (item: QualityItem) => {
-    setEditingItem(item)
-    if (item.table_data) {
-      setTableHeaders(item.table_data.headers || [])
-      setTableData(item.table_data.rows || [])
-    } else {
-      setTableHeaders(["Başlık 1", "Başlık 2"])
-      setTableData([["", ""]])
-    }
-    setIsTableDialogOpen(true)
-  }
-
-  const handleDelete = async (itemId: string) => {
-    if (!confirm("Bu kalite öğesini silmek istediğinizden emin misiniz?")) return
-
-    try {
-      const { error } = await supabase.from("quality_system").delete().eq("id", itemId)
-
-      if (error) throw error
-      await loadQualityItems()
-    } catch (error: any) {
-      console.error("Quality item delete error:", error)
-      alert(error.message || "Kalite öğesi silinirken hata oluştu")
-    }
-  }
-
-  const addTableRow = () => {
-    setTableData([...tableData, new Array(tableHeaders.length).fill("")])
-  }
-
-  const removeTableRow = (index: number) => {
-    setTableData(tableData.filter((_, i) => i !== index))
-  }
-
-  const updateTableCell = (rowIndex: number, colIndex: number, value: string) => {
-    const newData = [...tableData]
-    newData[rowIndex][colIndex] = value
-    setTableData(newData)
-  }
-
-  const updateTableHeader = (index: number, value: string) => {
-    const newHeaders = [...tableHeaders]
-    newHeaders[index] = value
-    setTableHeaders(newHeaders)
-  }
-
-  const addTableColumn = () => {
-    setTableHeaders([...tableHeaders, `Başlık ${tableHeaders.length + 1}`])
-    setTableData(tableData.map((row) => [...row, ""]))
-  }
-
-  const removeTableColumn = (index: number) => {
-    setTableHeaders(tableHeaders.filter((_, i) => i !== index))
-    setTableData(tableData.map((row) => row.filter((_, i) => i !== index)))
-  }
-
-  const resetForm = () => {
-    setEditingItem(null)
-    setFormData({
-      section: "altbaslik1",
-      title: "",
-      description: "",
-      content: "",
-      image_url: "",
-      is_active: true,
-      language: "tr",
-    })
-  }
-
-  const getItemsBySection = (section: string) => {
-    return qualityItems.filter((item) => item.section === section)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-doralp-gold"></div>
-      </div>
-    )
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('tr-TR')
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-doralp-navy">Kalite Sistemi</h1>
-          <p className="text-doralp-gray mt-2">Kalite yönetim sistemi içeriklerini yönetin</p>
+          <h1 className="text-3xl font-bold text-gray-900">Kalite Sistemi</h1>
+          <p className="text-gray-600 mt-2">Sertifikaları yönetin</p>
         </div>
+        <Button onClick={handleAdd} className="bg-doralp-navy hover:bg-doralp-navy/90">
+          <Plus className="w-4 h-4 mr-2" />
+          Yeni Sertifika
+        </Button>
+      </div>
 
+      {/* Sertifikalar Tablosu */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Sertifikalar</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-doralp-navy mx-auto"></div>
+              <p className="text-gray-600 mt-2">Sertifikalar yükleniyor...</p>
+            </div>
+          ) : certificates.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">Henüz sertifika eklenmemiş</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Görsel</TableHead>
+                  <TableHead>Başlık</TableHead>
+                  <TableHead>Sertifika No</TableHead>
+                  <TableHead>Veriliş Tarihi</TableHead>
+                  <TableHead>Geçerlilik</TableHead>
+                  <TableHead>Kurum</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead>İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {certificates.map((certificate) => (
+                  <TableRow key={certificate.id}>
+                    <TableCell>
+                      {certificate.image_url ? (
+                        <div className="w-12 h-12 relative">
+                          <Image
+                            src={certificate.image_url}
+                            alt={certificate.title}
+                            fill
+                            className="object-cover rounded"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{certificate.title}</TableCell>
+                    <TableCell>{certificate.certificate_number}</TableCell>
+                    <TableCell>{formatDate(certificate.issue_date)}</TableCell>
+                    <TableCell>
+                      {certificate.expiry_date ? formatDate(certificate.expiry_date) : 'Süresiz'}
+                    </TableCell>
+                    <TableCell>{certificate.issuing_authority}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        certificate.is_active 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {certificate.is_active ? 'Aktif' : 'Pasif'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(certificate)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(certificate.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Sertifika Ekleme/Düzenleme Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-doralp-gold hover:bg-doralp-gold/90" onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Yeni Kalite Öğesi
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingItem ? "Kalite Öğesi Düzenle" : "Yeni Kalite Öğesi Ekle"}</DialogTitle>
+            <DialogTitle>
+              {editingCertificate ? 'Sertifika Düzenle' : 'Yeni Sertifika Ekle'}
+            </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Bölüm</label>
-                  <Select
-                    value={formData.section}
-                    onValueChange={(value: "altbaslik1" | "altbaslik2" | "altbaslik3" | "altbaslik4") =>
-                      setFormData({ ...formData, section: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sectionOptions.map((section) => (
-                        <SelectItem key={section.value} value={section.value}>
-                          {section.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Dil</label>
-                  <Select
-                    value={formData.language}
-                    onValueChange={(value: "tr" | "en") => setFormData({ ...formData, language: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tr">Türkçe</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
               <div>
-                <label className="block text-sm font-medium mb-2">Başlık</label>
+                <Label htmlFor="title">Başlık</Label>
                 <Input
+                  id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   required
                   placeholder="ISO 9001:2015"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Kısa Açıklama</label>
+                <Label htmlFor="certificate_number">Sertifika Numarası</Label>
+                <Input
+                  id="certificate_number"
+                  value={formData.certificate_number}
+                  onChange={(e) => setFormData(prev => ({ ...prev, certificate_number: e.target.value }))}
+                  required
+                  placeholder="TR-12345"
+                />
+              </div>
+              </div>
+
+              <div>
+              <Label htmlFor="description">Açıklama</Label>
                 <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={2}
-                  placeholder="Kısa açıklama metni"
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Sertifika açıklaması"
+                rows={3}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Detaylı İçerik</label>
-                <Textarea
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  rows={4}
-                  placeholder="Detaylı açıklama ve içerik"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Resim</label>
-                <div className="space-y-2">
-                  {formData.image_url && (
-                    <div className="relative w-full h-32 rounded-lg overflow-hidden">
-                      <Image
-                        src={formData.image_url || "/placeholder.svg"}
-                        alt="Quality preview"
-                        fill
-                        className="object-cover"
+              <Label htmlFor="issuing_authority">Veren Kurum</Label>
+              <Input
+                id="issuing_authority"
+                value={formData.issuing_authority}
+                onChange={(e) => setFormData(prev => ({ ...prev, issuing_authority: e.target.value }))}
+                required
+                placeholder="TSE - Türk Standartları Enstitüsü"
                       />
                     </div>
-                  )}
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      placeholder="Resim URL'si"
-                    />
-                    <label htmlFor="quality-image-upload">
-                      <Button type="button" variant="outline" disabled={uploadingImage} asChild>
-                        <span>
-                          <Upload className="h-4 w-4 mr-2" />
-                          {uploadingImage ? "Yükleniyor..." : "Yükle"}
-                        </span>
-                      </Button>
-                      <input
-                        id="quality-image-upload"
-                        type="file"
-                        className="sr-only"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={handleImageUpload}
-                        disabled={uploadingImage}
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="issue_date">Veriliş Tarihi</Label>
+                    <Input
+                  id="issue_date"
+                  type="date"
+                  value={formData.issue_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, issue_date: e.target.value }))}
+                  required
                 />
-                <label className="text-sm font-medium">Aktif</label>
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  İptal
-                </Button>
-                <Button type="submit" className="bg-doralp-gold hover:bg-doralp-gold/90">
-                  {editingItem ? "Güncelle" : "Ekle"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Table Editor Dialog */}
-      <Dialog open={isTableDialogOpen} onOpenChange={setIsTableDialogOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Tablo Düzenle</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Table Headers */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Tablo Başlıkları</label>
-                <Button type="button" variant="outline" size="sm" onClick={addTableColumn}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Sütun Ekle
-                </Button>
-              </div>
-              <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tableHeaders.length}, 1fr)` }}>
-                {tableHeaders.map((header, index) => (
-                  <div key={index} className="flex items-center space-x-1">
+                <Label htmlFor="expiry_date">Son Geçerlilik Tarihi (İsteğe bağlı)</Label>
                     <Input
-                      value={header}
-                      onChange={(e) => updateTableHeader(index, e.target.value)}
-                      placeholder={`Başlık ${index + 1}`}
-                    />
-                    {tableHeaders.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeTableColumn(index)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  id="expiry_date"
+                  type="date"
+                  value={formData.expiry_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
+                />
               </div>
             </div>
 
-            {/* Table Data */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Tablo Verileri</label>
-                <Button type="button" variant="outline" size="sm" onClick={addTableRow}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Satır Ekle
-                </Button>
+              <Label htmlFor="image">Sertifika Görseli</Label>
+                            <Input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e)}
+              />
+              {editingCertificate?.image_url && !selectedFiles.image && (
+                <p className="text-xs text-gray-500 mt-1">Mevcut görsel: Var</p>
+              )}
               </div>
 
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {tableHeaders.map((header, index) => (
-                        <TableHead key={index}>{header}</TableHead>
-                      ))}
-                      <TableHead className="w-16"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tableData.map((row, rowIndex) => (
-                      <TableRow key={rowIndex}>
-                        {row.map((cell, colIndex) => (
-                          <TableCell key={colIndex}>
-                            <Input
-                              value={cell}
-                              onChange={(e) => updateTableCell(rowIndex, colIndex, e.target.value)}
-                              placeholder={`Veri ${colIndex + 1}`}
-                            />
-                          </TableCell>
-                        ))}
-                        <TableCell>
-                          {tableData.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeTableRow(rowIndex)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                className="rounded"
+              />
+              <Label htmlFor="is_active">Aktif</Label>
             </div>
 
             <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setIsTableDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 İptal
               </Button>
-              <Button onClick={handleTableSubmit} className="bg-doralp-gold hover:bg-doralp-gold/90">
-                Tabloyu Kaydet
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Kaydediliyor...' : editingCertificate ? 'Güncelle' : 'Ekle'}
               </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
-
-      {/* Tabs for Sections */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          {sectionOptions.map((section) => (
-            <TabsTrigger key={section.value} value={section.value}>
-              {section.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {sectionOptions.map((section) => (
-          <TabsContent key={section.value} value={section.value}>
-            <Card>
-              <CardHeader>
-                <CardTitle>{section.label} İçerikleri</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {getItemsBySection(section.value).map((item) => (
-                    <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                      {item.image_url && (
-                        <div className="w-20 h-16 relative rounded overflow-hidden flex-shrink-0">
-                          <Image
-                            src={item.image_url || "/placeholder.svg"}
-                            alt={item.title || "Quality item"}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-medium text-doralp-navy">{item.title}</h3>
-                          <Badge variant="outline">{item.language.toUpperCase()}</Badge>
-                          <Badge variant={item.is_active ? "default" : "secondary"}>
-                            {item.is_active ? "Aktif" : "Pasif"}
-                          </Badge>
-                          {item.table_data && (
-                            <Badge className="bg-blue-100 text-blue-800">
-                              <TableIcon className="w-3 h-3 mr-1" />
-                              Tablo Var
-                            </Badge>
-                          )}
-                        </div>
-
-                        {item.description && <p className="text-sm text-doralp-gray mb-1">{item.description}</p>}
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditTable(item)} title="Tablo Düzenle">
-                          <TableIcon className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {getItemsBySection(section.value).length === 0 && (
-                    <div className="text-center py-8 text-doralp-gray">Bu bölümde henüz içerik eklenmemiş</div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
     </div>
   )
 }

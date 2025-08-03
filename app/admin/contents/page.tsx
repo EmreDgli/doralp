@@ -47,16 +47,11 @@ export default function ContentsPage() {
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Footer</h3>
-          <p className="text-gray-600 mb-4">Alt bilgi ve sosyal medya linkleri</p>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            Düzenle
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">SEO</h3>
-          <p className="text-gray-600 mb-4">Meta açıklamaları ve anahtar kelimeler</p>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          <p className="text-gray-600 mb-4">Footer bilgileri, sosyal medya linkleri ve iletişim bilgileri</p>
+          <button 
+            onClick={() => router.push('/admin/footer-content')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
             Düzenle
           </button>
         </div>
