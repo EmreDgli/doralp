@@ -68,7 +68,11 @@ export default function ProjelerPage() {
 
   return (
     <div className="min-h-screen">
-      <PageHeader title="Projelerimiz" subtitle="Gerçekleştirdiğimiz başarılı projeler ve referanslarımız" />
+      <PageHeader 
+        title="Projelerimiz" 
+        subtitle="Gerçekleştirdiğimiz başarılı projeler ve referanslarımız"
+        backgroundImage="/doralp-photo-3.jpg"
+      />
 
       <section className="py-8 md:py-12 bg-doralp-light-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

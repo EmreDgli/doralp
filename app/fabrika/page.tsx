@@ -31,7 +31,11 @@ export default function FabrikaPage() {
 
   return (
     <div className="min-h-screen">
-      <PageHeader title="Fabrikamız" subtitle="Modern teknoloji ve kaliteli üretimin buluşma noktası" />
+      <PageHeader 
+        title="Fabrikamız" 
+        subtitle="Modern teknoloji ve kaliteli üretimin buluşma noktası"
+        backgroundImage="/fabrikagörseli.jpg"
+      />
 
       {/* Main Content */}
       <section className="py-16 md:py-24 bg-doralp-light-gray">

@@ -140,7 +140,7 @@ export default function AboutPage() {
 
             {/* Right Image */}
             <div className="relative max-w-md mx-auto lg:max-w-lg">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative overflow-hidden">
                 <Image
                   src="/doralp-photo-5.jpg"
                   alt="Doralp Fabrika"
@@ -202,7 +202,7 @@ export default function AboutPage() {
 
             {/* Sağ Taraf - Endüstriyel Görsel */}
             <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative overflow-hidden">
                 <Image
                   src="/herosection-doralp-foto.jpg"
                   alt="Doralp Endüstriyel Tesis"
@@ -267,13 +267,13 @@ export default function AboutPage() {
 
                 {/* Görsel/İkon Kısmı */}
                 <div className="flex-shrink-0">
-                  <div className="w-48 h-48 lg:w-56 lg:h-56 bg-gradient-to-br from-doralp-navy to-blue-800 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden">
+                  <div className="w-48 h-48 lg:w-56 lg:h-56 bg-gradient-to-br from-doralp-navy to-blue-800 flex items-center justify-center relative overflow-hidden">
                     {/* Background Pattern */}
                     <div className="absolute inset-0 opacity-20">
-                      <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
-                      <div className="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
-                      <div className="absolute bottom-8 left-8 w-6 h-6 border border-white rounded-full"></div>
-                      <div className="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full"></div>
+                      <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white"></div>
+                      <div className="absolute top-12 right-8 w-4 h-4 border border-white"></div>
+                      <div className="absolute bottom-8 left-8 w-6 h-6 border border-white"></div>
+                      <div className="absolute bottom-4 right-4 w-3 h-3 bg-white"></div>
                     </div>
                     
                     {/* Ana İkon */}

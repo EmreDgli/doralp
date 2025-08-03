@@ -119,7 +119,7 @@ export default function IletisimPage() {
       <PageHeader 
         title="İletişim" 
         subtitle="Bizimle iletişime geçin, projeleriniz için destek alalım"
-        backgroundImage="/doralp-photo-3.jpg"
+        backgroundImage="/iletisimresmi.png"
       />
 
       {/* Contact Form and Info Cards */}
